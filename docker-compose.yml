@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # The NestJS Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: partidosya_api
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount the current directory to enable hot-reloading
+      - .:/usr/src/app
+      # Create an anonymous volume for node_modules to prevent host OS conflicts
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=local_secure_password
+      - DB_NAME=partidosya_db
+    depends_on:
+      - postgres_db
+    networks:
+      - partidosya_network
+
+  # The PostgreSQL Database
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: partidosya_db_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local_secure_password
+      POSTGRES_DB: partidosya_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist database data even if the container is destroyed
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - partidosya_network
+
+volumes:
+  postgres_data:
+
+networks:
+  partidosya_network:
+    driver: bridge
