@@ -14,6 +14,7 @@ async function bootstrap() {
     .setTitle('PartidosYa API')
     .setDescription('The PartidosYa API description')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   
   const document = SwaggerModule.createDocument(app, config);

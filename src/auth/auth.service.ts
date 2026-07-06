@@ -8,6 +8,9 @@ import { User } from '../user/entities/user.entity';
 import { RefreshToken } from '../user/entities/refresh-token.entity';
 import { RegisterDto, LoginDto } from './auth.controller';
 
+const REFRESH_TOKEN_EXPIRES_IN_DAYS = 7;
+const ACCESS_TOKEN_EXPIRES_IN_MINUTES = "15m";
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -46,13 +49,17 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto, deviceInfo?: string) {
-    const { usernameOrEmail, password } = loginDto;
+    const { username, password } = loginDto;
+
+    if (!username || !password) {
+      throw new BadRequestException('Username/Email and password are required');
+    }
 
     // Find user
     const user = await this.userRepository.findOne({
       where: [
-        { email: usernameOrEmail },
-        { username: usernameOrEmail }
+        { email: username },
+        { username: username }
       ],
     });
 
@@ -132,18 +139,17 @@ export class AuthService {
     const jti = crypto.randomUUID();
     const payload = { sub: user.id, email: user.email, username: user.username };
 
-    const refreshTokenExpiresInDays = 7;
     const refreshTokenExpiresAt = new Date();
-    refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + refreshTokenExpiresInDays);
+    refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS);
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_ACCESS_SECRET || 'super_secret_access_key',
-        expiresIn: '15m',
+        expiresIn: ACCESS_TOKEN_EXPIRES_IN_MINUTES,
       }),
       this.jwtService.signAsync({ ...payload, jti }, {
         secret: process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key',
-        expiresIn: `${refreshTokenExpiresInDays}d`,
+        expiresIn: `${REFRESH_TOKEN_EXPIRES_IN_DAYS}d`,
       }),
     ]);
 

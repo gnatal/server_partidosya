@@ -27,9 +27,13 @@ export class RegisterDto {
 
 export class LoginDto {
   @ApiProperty({ description: 'Username or Email address', example: 'user@example.com' })
-  usernameOrEmail: string;
+  @IsNotEmpty({ message: 'Username or Email is required' })
+  @IsString({ message: 'Username or Email must be a string' })
+  username: string;
 
   @ApiProperty({ description: 'Password', example: 'password123' })
+  @IsNotEmpty({ message: 'Password is required' })
+  @IsString({ message: 'Password must be a string' })
   password: string;
 }
 
