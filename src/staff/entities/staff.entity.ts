@@ -25,7 +25,9 @@ export class Staff {
   @Column()
   userId: string;
 
-  @ManyToOne(() => Championship, (championship) => championship.staff, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Championship, (championship) => championship.staff, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'championshipId' })
   championship: Championship;
 

@@ -29,28 +29,39 @@ export class Stats {
   @Column({ default: 0 })
   assists: number;
 
-  @ManyToOne(() => Championship, (championship) => championship.stats, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Championship, (championship) => championship.stats, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'championshipId' })
   championship: Championship;
 
   @Column()
   championshipId: string;
 
-  @ManyToOne(() => Team, (team) => team.stats, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => Team, (team) => team.stats, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'teamId' })
   team?: Team;
 
   @Column({ nullable: true })
   teamId?: string;
 
-  @ManyToOne(() => User, (user) => user.stats, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, (user) => user.stats, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'userId' })
   user?: User;
 
   @Column({ nullable: true })
   userId?: string;
 
-  @ManyToOne(() => Visitor, (visitor) => visitor.stats, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => Visitor, (visitor) => visitor.stats, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'visitorId' })
   visitor?: Visitor;
 

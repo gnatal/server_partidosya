@@ -29,10 +29,16 @@ export class User {
   @Column({ unique: true, nullable: true })
   username?: string;
 
-  @OneToOne(() => Profile, (profile) => profile.user, { cascade: true, nullable: true })
+  @OneToOne(() => Profile, (profile) => profile.user, {
+    cascade: true,
+    nullable: true,
+  })
   profile?: Profile;
 
-  @OneToOne(() => Visitor, (visitor) => visitor.user, { cascade: true, nullable: true })
+  @OneToOne(() => Visitor, (visitor) => visitor.user, {
+    cascade: true,
+    nullable: true,
+  })
   visitor?: Visitor;
 
   @ManyToMany(() => Team, (team) => team.players)

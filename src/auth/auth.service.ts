@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -9,7 +13,7 @@ import { RefreshToken } from '../user/entities/refresh-token.entity';
 import { RegisterDto, LoginDto } from './auth.controller';
 
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 7;
-const ACCESS_TOKEN_EXPIRES_IN_MINUTES = "15m";
+const ACCESS_TOKEN_EXPIRES_IN_MINUTES = '15m';
 
 @Injectable()
 export class AuthService {
@@ -57,10 +61,7 @@ export class AuthService {
 
     // Find user
     const user = await this.userRepository.findOne({
-      where: [
-        { email: username },
-        { username: username }
-      ],
+      where: [{ email: username }, { username: username }],
     });
 
     if (!user || !user.password) {
@@ -77,7 +78,12 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     // Store the refresh token in the DB
-    await this.storeRefreshToken(user.id, tokens.jti, tokens.refreshTokenExpiresAt, deviceInfo);
+    await this.storeRefreshToken(
+      user.id,
+      tokens.jti,
+      tokens.refreshTokenExpiresAt,
+      deviceInfo,
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -91,7 +97,11 @@ export class AuthService {
       where: { token: jti, userId },
     });
 
-    if (!storedToken || storedToken.isRevoked || storedToken.expiresAt < new Date()) {
+    if (
+      !storedToken ||
+      storedToken.isRevoked ||
+      storedToken.expiresAt < new Date()
+    ) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
@@ -109,7 +119,12 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     // Store the new refresh token in DB
-    await this.storeRefreshToken(user.id, tokens.jti, tokens.refreshTokenExpiresAt, deviceInfo);
+    await this.storeRefreshToken(
+      user.id,
+      tokens.jti,
+      tokens.refreshTokenExpiresAt,
+      deviceInfo,
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -131,26 +146,35 @@ export class AuthService {
   async logoutAll(userId: string) {
     await this.refreshTokenRepository.update(
       { userId, isRevoked: false },
-      { isRevoked: true }
+      { isRevoked: true },
     );
   }
 
   private async generateTokens(user: User) {
     const jti = crypto.randomUUID();
-    const payload = { sub: user.id, email: user.email, username: user.username };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+    };
 
     const refreshTokenExpiresAt = new Date();
-    refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS);
+    refreshTokenExpiresAt.setDate(
+      refreshTokenExpiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS,
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_ACCESS_SECRET || 'super_secret_access_key',
         expiresIn: ACCESS_TOKEN_EXPIRES_IN_MINUTES,
       }),
-      this.jwtService.signAsync({ ...payload, jti }, {
-        secret: process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key',
-        expiresIn: `${REFRESH_TOKEN_EXPIRES_IN_DAYS}d`,
-      }),
+      this.jwtService.signAsync(
+        { ...payload, jti },
+        {
+          secret: process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key',
+          expiresIn: `${REFRESH_TOKEN_EXPIRES_IN_DAYS}d`,
+        },
+      ),
     ]);
 
     return {
@@ -161,7 +185,12 @@ export class AuthService {
     };
   }
 
-  private async storeRefreshToken(userId: string, jti: string, expiresAt: Date, deviceInfo?: string) {
+  private async storeRefreshToken(
+    userId: string,
+    jti: string,
+    expiresAt: Date,
+    deviceInfo?: string,
+  ) {
     const refreshToken = this.refreshTokenRepository.create({
       token: jti,
       userId,

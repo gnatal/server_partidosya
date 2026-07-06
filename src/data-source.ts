@@ -21,7 +21,11 @@ if (fs.existsSync(envPath)) {
       const key = match[1];
       let value = match[2] || '';
       // Remove surrounding quotes if any
-      if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+      if (
+        value.length > 0 &&
+        value.charAt(0) === '"' &&
+        value.charAt(value.length - 1) === '"'
+      ) {
         value = value.substring(1, value.length - 1);
       }
       process.env[key] = value.trim();
@@ -38,7 +42,17 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'partidosya_db',
   synchronize: false,
   logging: true,
-  entities: [User, Profile, Visitor, RefreshToken, Team, Championship, Stand, Stats, Staff],
+  entities: [
+    User,
+    Profile,
+    Visitor,
+    RefreshToken,
+    Team,
+    Championship,
+    Stand,
+    Stats,
+    Staff,
+  ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
 });

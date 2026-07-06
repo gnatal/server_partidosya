@@ -40,14 +40,20 @@ export class Team {
   })
   visitorPlayers: Visitor[];
 
-  @ManyToOne(() => User, (user) => user.captainTeams, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, (user) => user.captainTeams, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'captainUserId' })
   captainUser?: User;
 
   @Column({ nullable: true })
   captainUserId?: string;
 
-  @ManyToOne(() => Visitor, (visitor) => visitor.captainTeams, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => Visitor, (visitor) => visitor.captainTeams, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'captainVisitorId' })
   captainVisitor?: Visitor;
 

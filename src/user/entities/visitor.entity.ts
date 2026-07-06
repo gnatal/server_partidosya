@@ -27,7 +27,10 @@ export class Visitor {
   @Column({ nullable: true })
   location?: string;
 
-  @OneToOne(() => User, (user) => user.visitor, { onDelete: 'SET NULL', nullable: true })
+  @OneToOne(() => User, (user) => user.visitor, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'userId' })
   user?: User;
 

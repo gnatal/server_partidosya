@@ -13,7 +13,11 @@ export class AppController {
 
   @Get('health')
   @ApiOperation({ summary: 'Get application health status' })
-  @ApiResponse({ status: 200, description: 'Application is healthy', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Application is healthy',
+    type: String,
+  })
   getHealth(): string {
     return 'okay';
   }
