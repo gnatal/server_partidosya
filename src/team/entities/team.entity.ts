@@ -24,6 +24,9 @@ export class Team {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  profilePicture?: string;
+
   @ManyToMany(() => User, (user) => user.teams)
   @JoinTable({
     name: 'team_users',

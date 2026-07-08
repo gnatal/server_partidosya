@@ -28,6 +28,19 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ChampionshipService } from './championship.service';
 import { CreateChampionshipDto } from './dto/create-championship.dto';
 import { UpdateChampionshipDto } from './dto/update-championship.dto';
+import { AddTeamDto } from './dto/add-team.dto';
+
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
 
 interface RequestUser {
   id: string;
@@ -44,7 +57,7 @@ const storageOptions = diskStorage({
   destination: './uploads',
   filename: (
     req: Request,
-    file: Express.Multer.File,
+    file: MulterFile,
     cb: (error: Error | null, filename: string) => void,
   ) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -55,7 +68,7 @@ const storageOptions = diskStorage({
 
 const fileFilter = (
   req: Request,
-  file: Express.Multer.File,
+  file: MulterFile,
   cb: (error: Error | null, acceptFile: boolean) => void,
 ) => {
   if (file.fieldname === 'rules') {
@@ -108,8 +121,8 @@ export class ChampionshipController {
     @Body() createChampionshipDto: CreateChampionshipDto,
     @UploadedFiles()
     files: {
-      banner?: Express.Multer.File[];
-      rules?: Express.Multer.File[];
+      banner?: MulterFile[];
+      rules?: MulterFile[];
     },
   ) {
     const user = req.user as RequestUser;
@@ -173,8 +186,8 @@ export class ChampionshipController {
     @Body() updateChampionshipDto: UpdateChampionshipDto,
     @UploadedFiles()
     files: {
-      banner?: Express.Multer.File[];
-      rules?: Express.Multer.File[];
+      banner?: MulterFile[];
+      rules?: MulterFile[];
     },
   ) {
     const user = req.user as RequestUser;
@@ -209,5 +222,49 @@ export class ChampionshipController {
     const user = req.user as RequestUser;
     await this.championshipService.remove(id, user.id);
     return { message: 'Championship successfully deleted' };
+  }
+
+  @Post(':id/teams')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add a team to the championship' })
+  @ApiResponse({
+    status: 201,
+    description: 'Team added to the championship successfully.',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden. User is not staff.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Championship, team, or captain not found.',
+  })
+  async addTeam(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() addTeamDto: AddTeamDto,
+  ) {
+    const user = req.user as RequestUser;
+    return this.championshipService.addTeam(id, addTeamDto, user.id);
+  }
+
+  @Delete(':id/teams/:teamId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove a team from the championship' })
+  @ApiResponse({
+    status: 200,
+    description: 'Team removed from the championship successfully.',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden. User is not staff.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Championship or team association not found.',
+  })
+  async removeTeam(
+    @Param('id') id: string,
+    @Param('teamId') teamId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as RequestUser;
+    return this.championshipService.removeTeam(id, teamId, user.id);
   }
 }

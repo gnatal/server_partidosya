@@ -2,13 +2,18 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Championship } from './entities/championship.entity';
 import { Staff } from '../staff/entities/staff.entity';
+import { Team } from '../team/entities/team.entity';
+import { User } from '../user/entities/user.entity';
+import { Visitor } from '../user/entities/visitor.entity';
 import { CreateChampionshipDto } from './dto/create-championship.dto';
 import { UpdateChampionshipDto } from './dto/update-championship.dto';
+import { AddTeamDto } from './dto/add-team.dto';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -19,6 +24,12 @@ export class ChampionshipService {
     private readonly championshipRepository: Repository<Championship>,
     @InjectRepository(Staff)
     private readonly staffRepository: Repository<Staff>,
+    @InjectRepository(Team)
+    private readonly teamRepository: Repository<Team>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Visitor)
+    private readonly visitorRepository: Repository<Visitor>,
   ) {}
 
   private deleteFile(filePath: string) {
@@ -168,5 +179,94 @@ export class ChampionshipService {
     }
 
     await this.championshipRepository.remove(championship);
+  }
+
+  async addTeam(
+    championshipId: string,
+    addTeamDto: AddTeamDto,
+    userId: string,
+  ): Promise<Championship> {
+    await this.verifyStaff(championshipId, userId);
+
+    const championship = await this.championshipRepository.findOne({
+      where: { id: championshipId },
+      relations: { teams: true },
+    });
+    if (!championship) {
+      throw new NotFoundException('Championship not found');
+    }
+
+    let team: Team;
+    if (addTeamDto.teamId) {
+      const foundTeam = await this.teamRepository.findOne({
+        where: { id: addTeamDto.teamId },
+      });
+      if (!foundTeam) {
+        throw new NotFoundException('Team not found');
+      }
+      team = foundTeam;
+    } else if (addTeamDto.name) {
+      if (addTeamDto.captainUserId) {
+        const userExists = await this.userRepository.findOne({
+          where: { id: addTeamDto.captainUserId },
+        });
+        if (!userExists) {
+          throw new NotFoundException('Captain user not found');
+        }
+      }
+
+      if (addTeamDto.captainVisitorId) {
+        const visitorExists = await this.visitorRepository.findOne({
+          where: { id: addTeamDto.captainVisitorId },
+        });
+        if (!visitorExists) {
+          throw new NotFoundException('Captain visitor not found');
+        }
+      }
+
+      team = this.teamRepository.create({
+        name: addTeamDto.name,
+        profilePicture: addTeamDto.profilePicture,
+        captainUserId: addTeamDto.captainUserId,
+        captainVisitorId: addTeamDto.captainVisitorId,
+      });
+      team = await this.teamRepository.save(team);
+    } else {
+      throw new BadRequestException('Either teamId or name must be provided');
+    }
+
+    const exists = championship.teams.some((t) => t.id === team.id);
+    if (!exists) {
+      championship.teams.push(team);
+      await this.championshipRepository.save(championship);
+    }
+
+    return this.findOne(championshipId);
+  }
+
+  async removeTeam(
+    championshipId: string,
+    teamId: string,
+    userId: string,
+  ): Promise<Championship> {
+    await this.verifyStaff(championshipId, userId);
+
+    const championship = await this.championshipRepository.findOne({
+      where: { id: championshipId },
+      relations: { teams: true },
+    });
+    if (!championship) {
+      throw new NotFoundException('Championship not found');
+    }
+
+    const teamIndex = championship.teams.findIndex((t) => t.id === teamId);
+    if (teamIndex === -1) {
+      throw new NotFoundException('Team not found in this championship');
+    }
+
+    championship.teams.splice(teamIndex, 1);
+    await this.championshipRepository.save(championship);
+
+    return this.findOne(championshipId);
   }
 }
